@@ -1,0 +1,8 @@
+swagger-api:
+  image: stoplight/prism:3
+  container_name: "swagger-api"
+  ports:
+    - "8000:4010"
+  command: mock -h 0.0.0.0 /openapi.yaml
+  volumes:
+    - ./openapi.yml:/openapi.yaml

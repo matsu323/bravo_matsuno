@@ -1,0 +1,122 @@
+openapi: 3.0.3
+info:
+  title: bravo API
+  description: |-
+    チームブラボーのAPIです
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+tags:
+  - name: user
+    description: ユーザー関係
+paths:
+  /user:
+    get:
+      summary: ユーザー情報取得
+      tags:
+        - user
+      operationId: getUser
+      security:
+        - googleAuth: [ ]
+      description: ユーザーの情報を取得する
+      responses:
+        200:
+          description: ユーザー取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/user'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        500:
+          description: ユーザーが存在していない
+    patch:
+      summary: ユーザー名更新
+      tags:
+        - user
+      operationId: updateUserName
+      security:
+        - googleAuth: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  required: true
+      responses:
+        200:
+          description: 更新成功
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        500:
+          description: 更新失敗
+    delete:
+      summary: ユーザー削除
+      tags:
+        - user
+      operationId: deleteUser
+      security:
+        - googleAuth: [ ]
+      responses:
+        200:
+          description: 削除成功
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        500:
+          description: 削除失敗。何かの管理者のときなど。
+  /user/{user_id}:
+    get:
+      summary: idからユーザーを取得する
+      tags:
+        - user
+      operationId: getUserById
+      security:
+        - googleAuth: [ ]
+      parameters:
+        - in: path
+          name: user_id
+      responses:
+        200:
+          description: 取得成功。組織は空で返される。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/user'
+              example: { "id": 1,
+                         "name": "id取得ユーザ",
+                         "email": "get-by-id@example.com",
+                         "is_admin": true,
+                         "organizations": [] }
+        400:
+          description: 同一組織に所属してないユーザの情報を取得しようとした
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        500:
+          description: 取得失敗
+
+
+components:
+  securitySchemes:
+    googleAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    UnauthorizedError:
+      description: Access token is missing or invalid
+  schemas:
+    user:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          maxLength: 45
+      example: {
+        id: 1,
+        name: テストユーザ
+      }
