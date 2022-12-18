@@ -7,9 +7,65 @@ info:
 servers:
   - url: http://localhost:8000
 tags:
+  - name: auth
+    description: 認証関係
   - name: user
     description: ユーザー関係
+  - name: schedule
+    description: スケジュール関係
+  - name: tag
+    description: タグ関係
 paths:
+  /login:
+    post:
+      summary: ログイン
+      tags:
+        - auth
+      operationId: login
+      description: ログイン
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                password:
+                  type: string
+      responses:
+        200:
+          description: ログイン成功
+          content:
+            application/json:
+              schema:
+                properties:
+                  user_token:
+                    type: object
+                    $ref: '#/components/schemas/user_token'
+                  user:
+                    type: object
+                    $ref: '#/components/schemas/user'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        500:
+          description: ユーザーが存在していないかパスワードが違う
+  /logout:
+    post:
+      summary: ログアウト
+      tags:
+        - auth
+      operationId: logout
+      description: ログアウト
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: ログアウト成功
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        500:
+          description: エラー発生
   /user:
     get:
       summary: ユーザー情報取得
@@ -17,11 +73,40 @@ paths:
         - user
       operationId: getUser
       security:
-        - googleAuth: [ ]
+        - bearerAuth: [ ]
       description: ユーザーの情報を取得する
       responses:
         200:
           description: ユーザー取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/user'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        500:
+          description: ユーザーが存在していない
+    post:
+      summary: ユーザー作成
+      tags:
+        - user
+      operationId: createUser
+      security:
+        - bearerAuth: [ ]
+      description: ユーザーを作成する
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                password:
+                  type: string
+      responses:
+        200:
+          description: ユーザー作成成功
           content:
             application/json:
               schema:
@@ -36,7 +121,7 @@ paths:
         - user
       operationId: updateUserName
       security:
-        - googleAuth: [ ]
+        - bearerAuth: [ ]
       requestBody:
         content:
           application/json:
@@ -45,7 +130,6 @@ paths:
               properties:
                 name:
                   type: string
-                  required: true
       responses:
         200:
           description: 更新成功
@@ -59,51 +143,252 @@ paths:
         - user
       operationId: deleteUser
       security:
-        - googleAuth: [ ]
+        - bearerAuth: [ ]
       responses:
         200:
           description: 削除成功
         401:
           $ref: '#/components/responses/UnauthorizedError'
         500:
-          description: 削除失敗。何かの管理者のときなど。
-  /user/{user_id}:
-    get:
-      summary: idからユーザーを取得する
+          description: 削除失敗
+
+  /schedule:
+    post:
+      summary: スケジュール作成
       tags:
-        - user
-      operationId: getUserById
+        - schedule
+      operationId: createSchedule
       security:
-        - googleAuth: [ ]
-      parameters:
-        - in: path
-          name: user_id
+        - bearerAuth: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                start:
+                  type: string
+                  format: date-time
+                end:
+                  type: string
+                  format: date-time
+                tags:
+                  type: array
+                  items:
+                    type: integer
       responses:
         200:
-          description: 取得成功。組織は空で返される。
+          description: 作成成功
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/user'
-              example: { "id": 1,
-                         "name": "id取得ユーザ",
-                         "email": "get-by-id@example.com",
-                         "is_admin": true,
-                         "organizations": [] }
-        400:
-          description: 同一組織に所属してないユーザの情報を取得しようとした
+                $ref: '#/components/schemas/schedule'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        500:
+          description: 作成失敗
+    patch:
+      summary: スケジュール更新
+      tags:
+        - schedule
+      operationId: updateSchedule
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                title:
+                  type: string
+                start:
+                  type: string
+                  format: date-time
+                end:
+                  type: string
+                  format: date-time
+                tags:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        200:
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/schedule'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        500:
+          description: 更新失敗
+    delete:
+      summary: スケジュール削除
+      tags:
+        - schedule
+      operationId: deleteSchedule
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+      responses:
+        200:
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/schedule'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        500:
+          description: 削除失敗
+  /schedule/list:
+    get:
+      summary: スケジュール一覧
+      tags:
+        - schedule
+      operationId: getScheduleList
+      security:
+        - bearerAuth: [ ]
+      responses:
+        200:
+          description: 取得
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  schedules:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/schedule'
         401:
           $ref: '#/components/responses/UnauthorizedError'
         500:
           description: 取得失敗
 
+  /tag:
+    post:
+      summary: タグ作成
+      tags:
+        - tag
+      operationId: createtag
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+      responses:
+        200:
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tag'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        500:
+          description: 作成失敗
+    patch:
+      summary: タグ更新
+      tags:
+        - tag
+      operationId: updatetag
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                title:
+                  type: string
+      responses:
+        200:
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tag'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        500:
+          description: 更新失敗
+    delete:
+      summary: タグ削除
+      tags:
+        - tag
+      operationId: deletetag
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+      responses:
+        200:
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tag'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        500:
+          description: 削除失敗
+  /tag/list:
+    get:
+      summary: タグ一覧
+      tags:
+        - tag
+      operationId: getTagList
+      security:
+        - bearerAuth: [ ]
+      responses:
+        200:
+          description: 取得
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tags:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/tag'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        500:
+          description: 取得失敗
 
 components:
   securitySchemes:
-    googleAuth:
+    bearerAuth:
       type: http
       scheme: bearer
-      bearerFormat: JWT
   responses:
     UnauthorizedError:
       description: Access token is missing or invalid
@@ -120,3 +405,50 @@ components:
         id: 1,
         name: テストユーザ
       }
+    
+    user_token:
+      type: object
+      properties:
+        token:
+          type: string
+      example: {
+        token: token
+      }
+
+    schedule:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        tags:
+          type: array
+          items:
+            type: integer
+      example: {
+        id: 1,
+        title: "バイト1",
+        start: "2022-12-24T20:00:17.229Z",
+        end: "2022-12-24T23:59:17.229Z",
+        tags: [1, 2]
+      }
+
+    tag:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+      example: {
+        id: 1,
+        title: "バイト",
+      }
+
