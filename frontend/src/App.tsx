@@ -6,7 +6,7 @@ import {useCookies} from "react-cookie";
 import axios from "axios";
 import User from "./pages/User";
 import Home from "./pages/Home";
-import Header from "./components/Header";
+import UserLogin from "./pages/UserLogin";
 
 axios.defaults.baseURL = process.env.REACT_APP_BACKEND_URL;
 
@@ -22,10 +22,10 @@ function App() {
     return (
         <div className="App">
             <BrowserRouter>
-                <Header/>
                 <Routes>
                     <Route path={"/"} element={<Home/>}/>
                     <Route path={"/user"} element={<User/>}/>
+                    <Route path={"/user/login"} element={<UserLogin/>}/>
                 </Routes>
             </BrowserRouter>
         </div>
