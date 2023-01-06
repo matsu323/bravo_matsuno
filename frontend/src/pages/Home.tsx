@@ -7,7 +7,7 @@ const Home = () => {
         <Container className="App">
             <Typography variant="h1" fontFamily={'"Helvetica Neue", sans-serif'}>T2CALENDAR</Typography>
             <Box sx={{height:60}}/>
-            <Button href="">MY CALENDAR</Button>
+            <Button href="/user/mycalendar">MY CALENDAR</Button>
             <Box sx={{height:20}}/>
             <Button href="/user/login">LOGIN</Button>
             <Box sx={{height:20}}/>
